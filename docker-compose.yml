@@ -1,0 +1,151 @@
+version: '2'
+
+services:
+    lb:
+        image: nginx:alpine
+        volumes:
+            - ./nginx/lb:/etc/nginx/conf.d
+        ports:
+            - "8080:80"
+        environment:
+            - TIMEOUT=190
+            - DOCKER0NET
+        depends_on:
+            - varnish1
+
+            - varnish2
+
+    varnish1:
+        build: ./varnish
+        volumes:
+            - ./varnish/front1/default.vcl:/etc/varnish/configs/default.vcl
+        ports:
+            - "8081:80"
+        depends_on:
+            - front1
+
+    varnish2:
+        build: ./varnish
+        volumes:
+            - ./varnish/front2/default.vcl:/etc/varnish/configs/default.vcl
+        ports:
+            - "8082:80"
+        depends_on:
+            - front2
+
+    back:
+        image: nginx:alpine
+        volumes:
+            - ./nginx/back:/etc/nginx/conf.d
+        volumes_from:
+            - backapp
+        ports:
+            - "443:443"
+        environment:
+            - FASTCGI_PASS=backapp:9000
+            - TIMEOUT=190
+            - DOCKER0NET
+        depends_on:
+            - backapp
+
+    front1:
+        image: nginx:alpine
+        volumes:
+            - ./nginx/front1:/etc/nginx/conf.d
+        volumes_from:
+            - app1
+        ports:
+            - "8091:80"
+        environment:
+            - FASTCGI_PASS=app1:9000
+            - TIMEOUT=190
+            - DOCKER0NET
+        depends_on:
+            - app1
+
+    front2:
+        image: nginx:alpine
+        volumes:
+            - ./nginx/front2:/etc/nginx/conf.d
+        volumes_from:
+            - app2
+        ports:
+            - "8092:80"
+        environment:
+            - FASTCGI_PASS=app2:9000
+            - TIMEOUT=190
+            - DOCKER0NET
+        depends_on:
+            - app2
+
+    redis:
+        image: redis:alpine
+        ports:
+            - "6379"
+    backapp:
+        build: ./php
+        volumes:
+            - ./src/backapp:/var/www
+            - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
+        ports:
+            - "9003:9000"
+        depends_on:
+            - db
+            - redis
+        entrypoint: >
+            /bin/sh -c "
+                php -d memory_limit=-1 /usr/local/bin/composer create-project --prefer-dist --no-interaction ezsystems/ezplatform ezplatform;
+            "
+        restart: always
+
+    app1:
+        build: ./php
+        volumes:
+            - ./src/app1:/var/www
+            - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
+        ports:
+            - "9001:9000"
+        depends_on:
+            - db
+            - redis
+        restart: always
+
+    app2:
+        build: ./php
+        volumes:
+            - ./src/app2:/var/www
+            - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
+        ports:
+            - "9002:9000"
+        depends_on:
+            - db
+            - redis
+        restart: always
+
+    db:
+        image: mariadb:10.1
+        volumes:
+            - db_data:/var/lib/mysql
+            - ./mysql:/etc/mysql/conf.d
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: ezplatform
+            MYSQL_DATABASE: ezplatform
+            MYSQL_USER: ezplatform
+            MYSQL_PASSWORD: ezplatform
+
+    dbcluster:
+        image: mariadb:10.1
+        volumes:
+            - db_cluster_data:/var/lib/mysql
+            - ./mysql:/etc/mysql/conf.d
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: ezplatform
+            MYSQL_DATABASE: ezplatform_cluster
+            MYSQL_USER: ezplatform
+            MYSQL_PASSWORD: ezplatform
+
+volumes:
+    db_data:
+    db_cluster_data:
