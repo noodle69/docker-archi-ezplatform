@@ -12,7 +12,6 @@ services:
             - DOCKER0NET
         depends_on:
             - varnish1
-
             - varnish2
 
     varnish1:
@@ -34,7 +33,7 @@ services:
             - front2
 
     back:
-        image: nginx:alpine
+        build: ./nginx
         volumes:
             - ./nginx/back:/etc/nginx/conf.d
         volumes_from:
@@ -78,48 +77,82 @@ services:
         depends_on:
             - app2
 
-    redis:
-        image: redis:alpine
-        ports:
-            - "6379"
+    memcached:
+        image: memcached:alpine
+
     backapp:
         build: ./php
         volumes:
-            - ./src/backapp:/var/www
+            - ./app:/var/www
+            - ./app/scripts:/var/www/scripts
+            - ./app/var/ezplatform:/var/www/var/ezplatform
             - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
         ports:
             - "9003:9000"
         depends_on:
             - db
-            - redis
+            - memcached
         entrypoint: >
             /bin/sh -c "
-                php -d memory_limit=-1 /usr/local/bin/composer create-project --prefer-dist --no-interaction ezsystems/ezplatform ezplatform;
+                if [ ! -d "ezplatform" ]; then
+                    php -d memory_limit=-1 /usr/local/bin/composer create-project --prefer-dist --no-interaction ezsystems/ezplatform ezplatform;
+                    cp -f scripts/AppKernel.php ezplatform/app/;
+                    cp -f scripts/parameters.yml ezplatform/app/config/;
+                    cp -f scripts/ezplatform.yml ezplatform/app/config/;
+                    cp -f scripts/config.yml ezplatform/app/config/;
+                    mkdir -p /var/ezplatform/cache /var/ezplatform/logs;
+                    cd ezplatform;
+                    php -d memory_limit=-1 app/console ezplatform:install --env prod clean;
+                    php -d memory_limit=-1 app/console assets:install --symlink web;
+                    php -d memory_limit=-1 app/console assetic:dump --env=dev;
+                    chown -R www-data:www-data web /var/ezplatform;
+                fi
+                /usr/local/sbin/php-fpm
             "
         restart: always
 
     app1:
         build: ./php
         volumes:
-            - ./src/app1:/var/www
+            - ./app:/var/www
+            - ./app/var/ezplatform:/var/www/var/ezplatform
             - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
         ports:
             - "9001:9000"
         depends_on:
             - db
-            - redis
+            - backapp
+            - memcached
+        entrypoint: >
+            /bin/sh -c "
+                if [ ! -d "ezplatform" ]; then
+                    mkdir -p /var/ezplatform/cache /var/ezplatform/logs;
+                    chown -R www-data:www-data ezplatform/web /var/ezplatform;
+                fi
+                /usr/local/sbin/php-fpm
+            "
         restart: always
 
     app2:
         build: ./php
         volumes:
-            - ./src/app2:/var/www
+            - ./app:/var/www
+            - ./app/var/ezplatform:/var/www/var/ezplatform
             - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
         ports:
             - "9002:9000"
         depends_on:
             - db
-            - redis
+            - backapp
+            - memcached
+        entrypoint: >
+            /bin/sh -c "
+                if [ ! -d "ezplatform" ]; then
+                    mkdir -p /var/ezplatform/cache /var/ezplatform/logs;
+                    chown -R www-data:www-data ezplatform/web /var/ezplatform;
+                fi
+                /usr/local/sbin/php-fpm
+            "
         restart: always
 
     db:
@@ -134,18 +167,5 @@ services:
             MYSQL_USER: ezplatform
             MYSQL_PASSWORD: ezplatform
 
-    dbcluster:
-        image: mariadb:10.1
-        volumes:
-            - db_cluster_data:/var/lib/mysql
-            - ./mysql:/etc/mysql/conf.d
-        restart: always
-        environment:
-            MYSQL_ROOT_PASSWORD: ezplatform
-            MYSQL_DATABASE: ezplatform_cluster
-            MYSQL_USER: ezplatform
-            MYSQL_PASSWORD: ezplatform
-
 volumes:
     db_data:
-    db_cluster_data:

@@ -12,12 +12,18 @@ backend ezplatform {
 
 // ACL for invalidators IP
 acl invalidators {
+    "app1";
+    "app2";
+    "backapp";
     "127.0.0.1";
     "192.168.0.0"/16;
 }
 
 // ACL for debuggers IP
 acl debuggers {
+    "app1";
+    "app2";
+    "backapp";
     "127.0.0.1";
     "192.168.0.0"/16;
 }
