@@ -125,7 +125,7 @@ services:
             - memcached
         entrypoint: >
             /bin/sh -c "
-                if [ ! -d "ezplatform" ]; then
+                if [ ! -d "/var/ezplatform" ]; then
                     mkdir -p /var/ezplatform/cache /var/ezplatform/logs;
                     chown -R www-data:www-data ezplatform/web /var/ezplatform;
                 fi
@@ -147,7 +147,7 @@ services:
             - memcached
         entrypoint: >
             /bin/sh -c "
-                if [ ! -d "ezplatform" ]; then
+                if [ ! -d "/var/ezplatform" ]; then
                     mkdir -p /var/ezplatform/cache /var/ezplatform/logs;
                     chown -R www-data:www-data ezplatform/web /var/ezplatform;
                 fi
