@@ -105,7 +105,7 @@ services:
                     php -d memory_limit=-1 app/console ezplatform:install --env prod clean;
                     php -d memory_limit=-1 app/console assets:install --symlink web;
                     php -d memory_limit=-1 app/console assetic:dump --env=dev;
-                    chown -R www-data:www-data web /var/ezplatform;
+                    chown -R www-data:www-data app/cache app/logs web /var/ezplatform;
                 fi
                 /usr/local/sbin/php-fpm
             "
