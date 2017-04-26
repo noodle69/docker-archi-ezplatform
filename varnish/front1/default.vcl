@@ -149,7 +149,7 @@ sub ez_user_hash {
             // You may update this hash with the actual one for anonymous user
             // to get a better cache hit ratio across anonymous users.
             // Note: You should then update it every time anonymous user rights change.
-            // set req.http.X-User-Hash = "b1731d46b0e7a375a5b024e950fdb8d49dd25af85a5c7dd5116ad2a18cda82cb";
+            set req.http.X-User-Hash = "b1731d46b0e7a375a5b024e950fdb8d49dd25af85a5c7dd5116ad2a18cda82cb";
         }
         // Pre-authenticate request to get shared cache, even when authenticated
         else {
