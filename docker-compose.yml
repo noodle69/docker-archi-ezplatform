@@ -109,6 +109,9 @@ services:
                 fi
                 /usr/local/sbin/php-fpm
             "
+        extends:
+            file: .docker-base.yml
+            service: mother
         restart: always
 
     app1:
