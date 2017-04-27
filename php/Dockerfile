@@ -39,13 +39,15 @@ WORKDIR /var/www
 RUN mkdir -p /root/.composer \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+RUN mkdir -p /var/ezplatform
+
 USER root
 ARG UUID
 ARG GUID
 
 RUN set -xe; \
     adduser -D -u $UUID -g $GUID default;\
-    chown -R $UUID:$GUID /var/www;
+    chown -R $UUID:$GUID /var/www /var/ezplatform;
 USER default
 
 CMD php-fpm
