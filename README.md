@@ -11,10 +11,12 @@ clone this repository
 run
 
 ```
-make init
+make user.compose.yml
+make run
 ```
 
 # TODO
 
+* replace mariadb image with a mardiadb alpine image
 * fix cluster storage
 * add solr container

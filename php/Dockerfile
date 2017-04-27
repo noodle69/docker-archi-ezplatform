@@ -1,6 +1,5 @@
 FROM php:7.1-fpm-alpine
 
-
 RUN apk add --no-cache --virtual .persistent-deps \
         $PHPIZE_DEPS \
         freetype-dev \
@@ -24,7 +23,6 @@ RUN apk add --no-cache --virtual .persistent-deps \
         && echo "extension=memcached.so" > /usr/local/etc/php/conf.d/20_memcached.ini  \
         && cd ..
 
-
 RUN set -xe \
     && docker-php-source extract \
     && docker-php-ext-configure mysqli --with-mysqli=mysqlnd \
@@ -40,6 +38,15 @@ WORKDIR /var/www
 
 RUN mkdir -p /root/.composer \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+USER root
+ARG UUID
+ARG GUID
+
+RUN set -xe; \
+    adduser -D -u $UUID -g $GUID default;\
+    chown -R $UUID:$GUID /var/www;
+USER default
 
 CMD php-fpm
 

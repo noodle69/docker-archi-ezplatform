@@ -81,12 +81,6 @@ services:
         image: memcached:alpine
 
     backapp:
-        build: ./php
-        volumes:
-            - ./app:/var/www
-            - ./app/scripts:/var/www/scripts
-            - ./app/var/ezplatform:/var/www/var/ezplatform
-            - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
         ports:
             - "9003:9000"
         depends_on:
@@ -105,21 +99,15 @@ services:
                     php -d memory_limit=-1 app/console ezplatform:install --env prod clean;
                     php -d memory_limit=-1 app/console assets:install --symlink web;
                     php -d memory_limit=-1 app/console assetic:dump --env=dev;
-                    chown -R www-data:www-data app/cache app/logs web /var/ezplatform;
                 fi
                 /usr/local/sbin/php-fpm
             "
         extends:
-            file: .docker-base.yml
-            service: mother
+            file: user.compose.yml
+            service: php
         restart: always
 
     app1:
-        build: ./php
-        volumes:
-            - ./app:/var/www
-            - ./app/var/ezplatform:/var/www/var/ezplatform
-            - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
         ports:
             - "9001:9000"
         depends_on:
@@ -130,18 +118,15 @@ services:
             /bin/sh -c "
                 if [ ! -d "/var/ezplatform" ]; then
                     mkdir -p /var/ezplatform/cache /var/ezplatform/logs;
-                    chown -R www-data:www-data ezplatform/web /var/ezplatform;
                 fi
                 /usr/local/sbin/php-fpm
             "
+        extends:
+            file: user.compose.yml
+            service: php
         restart: always
 
     app2:
-        build: ./php
-        volumes:
-            - ./app:/var/www
-            - ./app/var/ezplatform:/var/www/var/ezplatform
-            - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
         ports:
             - "9002:9000"
         depends_on:
@@ -152,10 +137,12 @@ services:
             /bin/sh -c "
                 if [ ! -d "/var/ezplatform" ]; then
                     mkdir -p /var/ezplatform/cache /var/ezplatform/logs;
-                    chown -R www-data:www-data ezplatform/web /var/ezplatform;
                 fi
                 /usr/local/sbin/php-fpm
             "
+        extends:
+            file: user.compose.yml
+            service: php
         restart: always
 
     db:

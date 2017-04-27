@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+    php:
+        build: 
+            context: ./php
+            args:
+                UUID: __UUID__
+                GUID: __GUID__
+        volumes:
+            - ./app:/var/www
+            - ./app/scripts:/var/www/scripts
+            - ./app/var/ezplatform:/var/www/var/ezplatform
+            - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
+

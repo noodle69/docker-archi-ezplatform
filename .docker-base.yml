@@ -1,7 +1,0 @@
-version: '2'
-
-services:
-    mother:
-        user: 1000:1000
-        environment:
-            USER: root
