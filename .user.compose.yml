@@ -10,6 +10,6 @@ services:
         volumes:
             - ./app:/var/www
             - ./app/scripts:/var/www/scripts
-            - ./app/var/ezplatform:/var/www/var/ezplatform
+            - ./app/var/ezplatform:/var/ezplatform
             - ./php/logs.conf:/usr/local/etc/php-fpm.d/zz-log.conf
 
